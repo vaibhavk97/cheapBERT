@@ -157,7 +157,17 @@ c4constants.splits['val_small'] = DataSplitConstants(hf_split='validation',
                                                      raw_samples=10000,
                                                      truncated_samples=10000)
 
-CONSTS = {'c4': c4constants, 'the_pile': pileconstants}
+
+bookcorpusconstants = DatasetConstants(
+    chars_per_sample=64,  # Computed over validation set
+    chars_per_token=4  # OpenAI estimate
+)
+bookcorpusconstants.splits['train'] = DataSplitConstants(hf_split='train',
+                                                 folder_split='train',
+                                                 raw_samples=364868892,
+                                                 truncated_samples=None)
+
+CONSTS = {'c4': c4constants, 'the_pile': pileconstants,'bookcorpus': bookcorpusconstants}
 
 
 class NoConcatDataset(IterableDataset):
@@ -340,7 +350,7 @@ def build_dataloader(dataset, batch_size) -> DataLoader:
     if 'linux' in platform.platform().lower():
         num_workers = min(64, dataset.hf_dataset.n_shards)  # type: ignore
     else:
-        num_workers = 0
+        num_workers = 10
 
     # If using multiple workers, configure each worker to prefetch as many samples as it can, up to
     # the aggregate device batch size
